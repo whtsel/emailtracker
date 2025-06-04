@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Tracker & Generator</title>
+    <!-- Tailwind CSS CDN for utility-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter for a modern, clean look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Apply Inter font to the entire body */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            color: #333; /* Dark gray text color */
+        }
+        /* Container for the main content, centered and with max-width */
+        .container {
+            max-width: 960px;
+        }
+        /* Styling for the active tab button */
+        .tab-button.active {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white;
+        }
+        /* Placeholder styling for ad spaces */
+        .ad-placeholder {
+            background-color: #e0e0e0; /* Light gray */
+            border: 2px dashed #9e9e9e; /* Dashed border for visibility */
+            color: #616161; /* Medium gray text */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 120px; /* Minimum height for ad space */
+            font-weight: bold;
+            border-radius: 0.5rem; /* Rounded corners */
+            overflow: hidden; /* Hide overflowing content for ads */
+        }
+        /* Modal styles for error messages and choice dialogs */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if content is too large */
+            background-color: rgba(0,0,0,0.4); /* Black background with transparency */
+            align-items: center; /* Center content vertically */
+            justify-content: center; /* Center content horizontally */
+        }
+        .modal-content {
+            background-color: #fefefe; /* White background */
+            margin: auto; /* Center the modal box */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* 80% width of the parent */
+            max-width: 400px; /* Max width to prevent it from getting too wide */
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            position: relative;
+        }
+        .close-button {
+            color: #aaa; /* Light gray color for close button */
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Styling for blog thumbnail placeholders */
+        .blog-thumbnail-placeholder {
+            background-color: #e0e0e0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .blog-thumbnail-placeholder img {
+            width: 100%;
+            height: 120px; /* Fixed height for thumbnails */
+            object-fit: cover; /* Ensure image covers the area */
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .blog-thumbnail-placeholder .title {
+            padding: 0.75rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .blog-thumbnail-placeholder .link {
+            display: block;
+            padding: 0.5rem 0.75rem 0.75rem;
+            color: #4f46e5;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        .blog-thumbnail-placeholder .link:hover {
+            text-decoration: underline;
+        }
+
+        /* Checkbox container styling */
+        .checkbox-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px; /* Slightly larger box */
+            height: 32px; /* Slightly larger box */
+            border: 2px solid #ccc; /* Grey border for the box */
+            border-radius: 0.25rem; /* Small rounded corners for the box */
+            margin-left: 12px; /* Space from the button */
+            transition: border-color 0.3s ease-in-out;
+        }
+        .checkbox-container.green-border {
+            border-color: #10B981; /* Green border when active */
+        }
+
+        /* Checkbox icon styling */
+        .checkbox-icon {
+            width: 24px; /* Icon size */
+            height: 24px; /* Icon size */
+            fill: none; /* No fill by default */
+            stroke: #ccc; /* Grey stroke by default */
+            stroke-width: 3; /* Bolder stroke for the checkmark */
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.3s ease-in-out; /* Smooth transition for color change */
+        }
+        .checkbox-icon.green {
+            stroke: #10B981; /* Green-500 stroke */
+        }
+
+        /* Bounce animation */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-8px); /* Slightly less bounce for smaller icon */
+            }
+            60% {
+                transform: translateY(-3px);
+            }
+        }
+        .bounce-animation {
+            animation: bounce 0.6s ease-in-out;
+        }
+
+        /* Copy button feedback message */
+        .copy-feedback {
+            margin-left: 12px;
+            font-weight: 600;
+            color: #10B981; /* Green-500 */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* Ad Carousel Modal Specific Styles */
+        #adCarouselModal .modal-content {
+            width: 90%; /* Cover most of the screen */
+            height: 90%; /* Cover most of the screen */
+            max-width: 450px; /* Portrait-like max width */
+            max-height: 750px; /* Portrait-like max height */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Space between header, ad, and footer */
+            align-items: center;
+            padding: 1rem; /* Adjust padding for full screen */
+            box-sizing: border-box; /* Include padding in width/height */
+        }
+
+        #adCarouselModal .ad-display-area {
+            flex-grow: 1; /* Allow ad content to take available space */
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f5f5; /* Lighter background for ad area */
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            overflow: hidden; /* Ensure ad content doesn't overflow */
+        }
+
+        #adCarouselModal .ad-item {
+            width: 100%;
+            height: 100%;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #424242;
+            background-color: #e0e0e0;
+            border-radius: 0.5rem;
+        }
+        #adCarouselModal .ad-item.active-ad {
+            display: flex; /* Show active ad */
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <h1 class="text-4xl font-bold text-center mb-8 text-indigo-700">Email Tracker & Generator</h1>
+
+        <div class="flex justify-center mb-8">
+            <button id="tabFree" class="tab-button px-6 py-3 rounded-l-lg text-lg font-semibold transition-colors duration-200 active bg-indigo-600 hover:bg-indigo-700 text-white">Free Version (20 Emails)</button>
+            <button id="tabPremium" class="tab-button px-6 py-3 rounded-r-lg text-lg font-semibold transition-colors duration-200 bg-gray-200 hover:bg-gray-300 text-gray-800">Premium Version (4000+ Emails)</button>
+        </div>
+
+        <div id="siteContent">
+            <div id="freeSite" class="site-section">
+                <div class="ad-placeholder w-full h-32 mb-6">
+                    <p>Ad Space 1 (Top) - Integrate your AdSense here</p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="baseEmailFree" class="block text-gray-700 text-sm font-bold mb-2">Enter Base Email:</label>
+                    <input type="email" id="baseEmailFree" placeholder="yourname@example.com" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500">
+                </div>
+                <div class="flex justify-center items-center mb-6">
+                    <button id="generateBtnFree" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">Generate Emails</button>
+                    <div id="checkboxContainerFree" class="checkbox-container">
+                        <svg id="checkboxFree" class="checkbox-icon" viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="ad-placeholder w-full h-32 mb-6">
+                    <p>Ad Space 2 (Middle) - Integrate your AdSense here</p>
+                </div>
+
+                <div class="ad-placeholder w-full h-32 mb-6">
+                    <p>Ad Space 3 (Lower Middle) - Integrate your AdSense here</p>
+                </div>
+
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Our Latest Blogs</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="blog-thumbnail-placeholder">
+                            <img src="https://placehold.co/300x120/A0A0A0/FFFFFF?text=Blog+1" alt="Blog Thumbnail 1">
+                            <div class="title">Understanding Email Tracking</div>
+                            <a href="#" class="link">Read More →</a>
+                        </div>
+                        <div class="blog-thumbnail-placeholder">
+                            <img src="https://placehold.co/300x120/B0B0B0/FFFFFF?text=Blog+2" alt="Blog Thumbnail 2">
+                            <div class="title">Tips for Effective Email Campaigns</div>
+                            <a href="#" class="link">Read More →</a>
+                        </div>
+                        <div class="blog-thumbnail-placeholder">
+                            <img src="https://placehold.co/300x120/C0C0C0/FFFFFF?text=Blog+3" alt="Blog Thumbnail 3">
+                            <div class="title">Advanced Gmail Tricks</div>
+                            <a href="#" class="link">Read More →</a>
+                        </div>
+                        <div class="blog-thumbnail-placeholder">
+                            <img src="https://placehold.co/300x120/D0D0D0/FFFFFF?text=Blog+4" alt="Blog Thumbnail 4">
+                            <div class="title">Protecting Your Online Privacy</div>
+                            <a href="#" class="link">Read More →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ad-placeholder w-full h-32 mt-6">
+                    <p>Ad Space 4 (Bottom) - Integrate your AdSense here</p>
+                </div>
+
+                <div class="bg-gray-100 p-6 rounded-lg border border-gray-200 min-h-[200px] overflow-auto mt-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Generated Emails (Max 20):</h2>
+                    <ul id="emailListFree" class="list-disc list-inside text-gray-700">
+                        </ul>
+                    <div class="flex items-center mt-4">
+                        <button id="copyBtnFree" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">Copy All Emails</button>
+                        <span id="copyFeedbackFree" class="copy-feedback">Copied!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="premiumSite" class="site-section hidden">
+                <div class="ad-placeholder w-full h-32 mb-6">
+                    <p>Ad Space 1 (Premium Top) - Integrate your AdSense here</p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="baseEmailPremium" class="block text-gray-700 text-sm font-bold mb-2">Enter Base Email:</label>
+                    <input type="email" id="baseEmailPremium" placeholder="yourname@example.com" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500">
+                </div>
+                <div class="flex justify-center items-center mb-6">
+                    <button id="generateBtnPremium" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">Generate All Emails</button>
+                    <div id="checkboxContainerPremium" class="checkbox-container">
+                        <svg id="checkboxPremium" class="checkbox-icon" viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id=
+				"youtubeLinkArea" class="bg-yellow-100 border border-yellow-300 text-yellow-800 p-4 rounded-lg mb-6 text-center hidden">
+                    <p class="font-semibold text-lg">Help my channel...Subscribe, like and watch the video to reveal the passkey..Thank You!!!!</p>
+                    <a href="https://www.youtube.com/@Google" target="_blank" id="youtubeLink" class="bg-red-600 text-black font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition-colors duration-200 inline-block mt-2">Get PassKey</a>
+                </div>
+
+                <div class="ad-placeholder w-full h-32 mb-6">
+                    <p>Ad Space 2 (Premium Middle) - Integrate your AdSense here</p>
+                </div>
+
+                <div class="flex items-center justify-center mb-6">
+                    <label for="passkeyInput" class="block text-gray-700 text-sm font-bold mr-4">Enter Passkey:</label>
+                    <input type="password" id="passkeyInput" class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500 w-48 mr-4">
+                    <button id="passkeyOkBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-5 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">OK</button>
+                </div>
+
+                <div class="ad-placeholder w-full h-32 mt-6">
+                    <p>Ad Space 3 (Premium Bottom) - Integrate your AdSense here</p>
+                </div>
+
+                <div class="bg-gray-100 p-6 rounded-lg border border-gray-200 min-h-[200px] overflow-auto mt-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Generated Emails (All Possible):</h2>
+                    <ul id="emailListPremium" class="list-disc list-inside text-gray-700">
+                        </ul>
+                    <div class="flex items-center mt-4">
+                        <button id="copyBtnPremium" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">Copy All Emails</button>
+                        <span id="copyFeedbackPremium" class="copy-feedback">Copied!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <div class="flex items-center mb-4">
+                <svg class="w-8 h-8 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <h3 class="text-2xl font-bold text-red-700">Error!</h3>
+            </div>
+            <p id="errorMessage" class="text-gray-700 text-lg"></p>
+            <div class="flex justify-end mt-6">
+                <button id="modalCloseBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="choiceModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Important!</h3>
+            <p id="choiceMessage" class="text-gray-700 text-lg mb-6">Do you want to watch 15 ads or proceed to the YouTube channel?</p>
+            <div class="flex justify-around">
+                <button id="choiceYesBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">Yes (Go to YouTube)</button>
+                <button id="choiceNoBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">No (Watch Ads)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adCarouselModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Watching Ads (<span id="adCounter">1</span>/15)</h3>
+            <div class="ad-display-area">
+                </div>
+            <button id="closeAdCarouselBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200 mt-4 hidden">Close Ads</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to HTML elements
+            const tabFree = document.getElementById('tabFree');
+            const tabPremium = document.getElementById('tabPremium');
+            const freeSite = document.getElementById('freeSite');
+            const premiumSite = document.getElementById('premiumSite');
+
+            const baseEmailFreeInput = document.getElementById('baseEmailFree');
+            const generateBtnFree = document.getElementById('generateBtnFree');
+            const emailListFree = document.getElementById('emailListFree');
+            const checkboxFree = document.getElementById('checkboxFree');
+            const checkboxContainerFree = document.getElementById('checkboxContainerFree');
+            const copyBtnFree = document.getElementById('copyBtnFree');
+            const copyFeedbackFree = document.getElementById('copyFeedbackFree');
+
+            const baseEmailPremiumInput = document.getElementById('baseEmailPremium');
+            const generateBtnPremium = document.getElementById('generateBtnPremium');
+            const emailListPremium = document.getElementById('emailListPremium');
+            const checkboxPremium = document.getElementById('checkboxPremium');
+            const checkboxContainerPremium = document.getElementById('checkboxContainerPremium');
+            const copyBtnPremium = document.getElementById('copyBtnPremium');
+            const copyFeedbackPremium = document.getElementById('copyFeedbackPremium');
+
+            const youtubeLinkArea = document.getElementById('youtubeLinkArea');
+            const youtubeLink = document.getElementById('youtubeLink');
+            const passkeyInput = document.getElementById('passkeyInput');
+            const passkeyOkBtn = document.getElementById('passkeyOkBtn');
+
+            const errorModal = document.getElementById('errorModal');
+            const errorMessage = document.getElementById('errorMessage');
+            const closeErrorButtons = document.querySelectorAll('.close-button, #modalCloseBtn');
+
+            const choiceModal = document.getElementById('choiceModal');
+            const choiceYesBtn = document.getElementById('choiceYesBtn');
+            const choiceNoBtn = document.getElementById('choiceNoBtn');
+
+            // New Ad Carousel Modal elements
+            const adCarouselModal = document.getElementById('adCarouselModal');
+            const adDisplayArea = adCarouselModal.querySelector('.ad-display-area');
+            const adCounterSpan = document.getElementById('adCounter');
+            const closeAdCarouselBtn = document.getElementById('closeAdCarouselBtn');
+
+
+            // Define constants for passkey and YouTube URL
+            const CORRECT_PASSKEY = "5mr5ttv";
+            const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@Google"; // Placeholder YouTube channel
+            const AD_DISPLAY_DURATION = 12 * 1000; // 12 seconds in milliseconds
+
+            // State variables for Premium logic
+            let youtubeLinkClickedTime = 0; // Timestamp when YouTube link was clicked
+            let premiumGenerateClicked = false; // Flag if generate button was clicked in premium
+            let userChoseYouTube = false; // Flag if user explicitly chose YouTube in the modal
+            let currentAdIndex = 0;
+            let adIntervalId = null;
+
+            /**
+             * Displays a custom modal with a given error message.
+             * @param {string} message - The message to display in the modal.
+             */
+            function showModal(message) {
+                errorMessage.textContent = message;
+                errorModal.style.display = 'flex'; // Use flexbox for centering
+            }
+
+            /**
+             * Hides the custom error modal.
+             */
+            function hideErrorModal() {
+                errorModal.style.display = 'none';
+            }
+
+            /**
+             * Displays the choice modal.
+             */
+            function showChoiceModal() {
+                choiceModal.style.display = 'flex';
+            }
+
+            /**
+             * Hides the choice modal.
+             */
+            function hideChoiceModal() {
+                choiceModal.style.display = 'none';
+            }
+
+            /**
+             * Displays the ad carousel modal.
+             */
+            function showAdCarouselModal() {
+                adCarouselModal.style.display = 'flex';
+                closeAdCarouselBtn.classList.add('hidden'); // Hide close button initially
+            }
+
+            /**
+             * Hides the ad carousel modal and clears any running ad interval.
+             */
+            function hideAdCarouselModal() {
+                adCarouselModal.style.display = 'none';
+                if (adIntervalId) {
+                    clearInterval(adIntervalId);
+                    adIntervalId = null;
+                }
+                currentAdIndex = 0; // Reset ad index
+                adDisplayArea.innerHTML = ''; // Clear ad content
+            }
+
+            // Add event listeners to all elements that should close the error modal
+            closeErrorButtons.forEach(button => {
+                button.addEventListener('click', hideErrorModal);
+            });
+
+            // Close modal if the user clicks outside the modal content
+            window.addEventListener('click', (event) => {
+                if (event.target === errorModal) {
+                    hideErrorModal();
+                }
+                if (event.target === choiceModal) {
+                    hideChoiceModal();
+                }
+                // Do NOT close adCarouselModal on outside click, it's timed.
+            });
+
+            // Close button for Ad Carousel Modal
+            closeAdCarouselBtn.addEventListener('click', () => {
+                hideAdCarouselModal();
+            });
+
+
+            /**
+             * Switches the active site view (Free or Premium).
+             * Updates tab button styles accordingly.
+             * @param {string} siteToShow - 'free' or 'premium'.
+             */
+            function switchTab(siteToShow) {
+                if (siteToShow === 'free') {
+                    freeSite.classList.remove('hidden');
+                    premiumSite.classList.add('hidden');
+                    tabFree.classList.add('active', 'bg-indigo-600', 'text-white');
+                    tabFree.classList.remove('bg-gray-200', 'text-gray-800');
+                    tabPremium.classList.remove('active', 'bg-indigo-600', 'text-white');
+                    tabPremium.classList.add('bg-gray-200', 'text-gray-800');
+                } else {
+                    premiumSite.classList.remove('hidden');
+                    freeSite.classList.add('hidden');
+                    tabPremium.classList.add('active', 'bg-indigo-600', 'text-white');
+                    tabPremium.classList.remove('bg-gray-200', 'text-gray-800');
+                    tabFree.classList.remove('active', 'bg-indigo-600', 'text-gray-800');
+                    tabFree.classList.add('bg-gray-200', 'text-gray-800');
+                }
+                // Reset premium state when switching tabs
+                youtubeLinkClickedTime = 0;
+                premiumGenerateClicked = false;
+                userChoseYouTube = false;
+                youtubeLinkArea.classList.add('hidden');
+                hideAdCarouselModal(); // Ensure ad modal is hidden
+                passkeyInput.value = ''; // Clear passkey
+                resetCheckboxes(); // Reset checkbox states
+            }
+
+            // Set the initial active tab to 'free' when the page loads
+            switchTab('free');
+
+            // Add event listeners for tab switching
+            tabFree.addEventListener('click', () => switchTab('free'));
+            tabPremium.addEventListener('click', () => switchTab('premium'));
+
+            /**
+             * Resets the visual state of both checkboxes.
+             */
+            function resetCheckboxes() {
+                checkboxFree.classList.remove('green', 'bounce-animation');
+                checkboxContainerFree.classList.remove('green-border');
+                checkboxPremium.classList.remove('green', 'bounce-animation');
+                checkboxContainerPremium.classList.remove('green-border');
+            }
+
+            /**
+             * Activates the bounce animation and green fill for a given checkbox.
+             * @param {HTMLElement} checkboxElement - The SVG checkbox element.
+             * @param {HTMLElement} containerElement - The checkbox container element.
+             */
+            function activateCheckboxAnimation(checkboxElement, containerElement) {
+                checkboxElement.classList.add('green');
+                containerElement.classList.add('green-border');
+                checkboxElement.classList.remove('bounce-animation'); // Remove to allow re-triggering
+                void checkboxElement.offsetWidth; // Trigger reflow
+                checkboxElement.classList.add('bounce-animation');
+            }
+
+            /**
+             * Validates if a given string is a correctly formatted email address.
+             * @param {string} email - The email string to validate.
+             * @returns {boolean} True if the email is valid, false otherwise.
+             */
+            function isValidEmail(email) {
+                // Basic regex for email validation (covers common formats)
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            /**
+             * Generates all unique dot variations for the username part of a Gmail address.
+             * Gmail ignores periods in usernames, so 'a.b.c' is treated the same as 'abc'.
+             * This function creates all possible permutations of dot placements.
+             * For a username of length N, there are 2^(N-1) possible variations.
+             * @param {string} username - The username part of the email (e.g., "selormbless").
+             * @returns {Set<string>} A Set containing unique dot-variant usernames.
+             */
+            function generateDotVariations(username) {
+                const variations = new Set();
+                const n = username.length;
+
+                // If the username is empty, return an empty set.
+                if (n === 0) {
+                    return variations;
+                }
+                // If username has only one character, there are no places to insert dots.
+                if (n === 1) {
+                    variations.add(username);
+                    return variations;
+                }
+
+                // Iterate through all possible bitmasks for dot placement.
+                // A bitmask of length (n-1) determines whether a dot is placed after each character
+                // (from the first character up to the second-to-last character).
+                for (let i = 0; i < (1 << (n - 1)); i++) {
+                    let currentVariation = "";
+                    for (let j = 0; j < n; j++) {
+                        currentVariation += username[j];
+                        // If it's not the last character and the j-th bit in the mask is set, add a dot.
+                        if (j < n - 1 && (i & (1 << j))) {
+                            currentVariation += ".";
+                        }
+                    }
+                    variations.add(currentVariation);
+                }
+                return variations;
+            }
+
+            /**
+             * Generates a list of sub-email addresses based on dot variations for Gmail.
+             * It extracts the username and domain, generates dot variations, and reconstructs emails.
+             * It also ensures the base email is included and handles non-Gmail domains.
+             * @param {string} baseEmail - The original email address (e.g., "selormbless81@gmail.com").
+             * @param {number} [limit=Infinity] - Optional limit to the number of emails to generate.
+             * @returns {string[]} An array of generated email addresses. Returns empty array on error.
+             */
+            function generateSubEmails(baseEmail, limit = Infinity) {
+                if (!isValidEmail(baseEmail)) {
+                    showModal("Please enter a valid email address format (e.g., user@domain.com).");
+                    return [];
+                }
+
+                const parts = baseEmail.split('@');
+                // Remove any existing dots from the username part before generating new variations
+                const username = parts[0].replace(/\./g, '');
+                const domain = parts[1];
+
+                // This tool specifically leverages the Gmail dot trick
+                if (domain.toLowerCase() !== 'gmail.com') {
+                    showModal("This email generation feature is specifically designed for Gmail addresses only (due to how Gmail handles periods).");
+                    return [];
+                }
+
+                const dotVariations = Array.from(generateDotVariations(username));
+                const generatedEmails = dotVariations.map(variation => `${variation}@${domain}`);
+
+                // Ensure the original email (without any extra dots if it had them) is always included
+                const cleanedBaseEmail = `${username}@${domain}`;
+                if (!generatedEmails.includes(cleanedBaseEmail)) {
+                     generatedEmails.unshift(cleanedBaseEmail);
+                }
+
+                // Return only the limited number of emails if a limit is provided (for the free version)
+                return generatedEmails.slice(0, limit);
+            }
+
+            /**
+             * Displays the next ad in the carousel.
+             */
+            function showNextAd() {
+                // Clear previous ad content
+                adDisplayArea.innerHTML = '';
+
+                if (currentAdIndex < 15) {
+                    adCounterSpan.textContent = (currentAdIndex + 1);
+                    const adDiv = document.createElement('div');
+                    adDiv.className = 'ad-item active-ad';
+                    adDiv.innerHTML = `<p>Ad ${currentAdIndex + 1} of 15</p>`; // Ad content
+                    adDisplayArea.appendChild(adDiv);
+                    currentAdIndex++;
+                } else {
+                    // All ads displayed, stop interval
+                    if (adIntervalId) {
+                        clearInterval(adIntervalId);
+                        adIntervalId = null;
+                    }
+                    // Hide the modal after all ads are shown
+                    hideAdCarouselModal();
+                    // After ads, automatically proceed with passkey check
+                    passkeyOkBtn.click();
+                }
+            }
+
+            /**
+             * Initiates the display of 15 ads in a carousel.
+             */
+            function startAdCarousel() {
+                showAdCarouselModal();
+                currentAdIndex = 0; // Reset ad index
+                showNextAd(); // Show the first ad
+
+                // Set interval for subsequent ads
+                adIntervalId = setInterval(showNextAd, AD_DISPLAY_DURATION);
+            }
+
+
+            /**
+             * Copies the text content of a given email list to the clipboard.
+             * @param {HTMLElement} emailListElement - The UL element containing the emails.
+             * @param {HTMLElement} feedbackElement - The span element for "Copied!" feedback.
+             */
+            function copyEmailsToClipboard(emailListElement, feedbackElement) {
+                const emails = Array.from(emailListElement.children).map(li => li.textContent).join('\n');
+                if (emails.length === 0) {
+                    showModal("No emails to copy.");
+                    return;
+                }
+
+                // Create a temporary textarea to copy text from
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = emails;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    feedbackElement.classList.add('show');
+                    setTimeout(() => {
+                        feedbackElement.classList.remove('show');
+                    }, 1500); // Hide "Copied!" after 1.5 seconds
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    showModal('Failed to copy emails to clipboard. Please try manually.');
+                } finally {
+                    document.body.removeChild(tempTextArea);
+                }
+            }
+
+
+            // --- Free Site Logic ---
+            generateBtnFree.addEventListener('click', () => {
+                const baseEmail = baseEmailFreeInput.value.trim();
+                emailListFree.innerHTML = ''; // Clear previous results
+                resetCheckboxes(); // Reset checkbox before attempting generation
+
+                if (!baseEmail) {
+                    showModal("Please enter a base email to generate sub-emails for the Free Version.");
+                    return;
+                }
+
+                // Simulate ad display by disabling button and showing a message
+                generateBtnFree.textContent = "Loading Ads...";
+                generateBtnFree.disabled = true;
+
+                // After a short delay (simulating ad loading), generate and display emails
+                setTimeout(() => {
+                    const emails = generateSubEmails(baseEmail, 20); // Limit to 20 for free version
+                    if (emails.length > 0) {
+                        emails.forEach(email => {
+                            const li = document.createElement('li');
+                            li.textContent = email;
+                            emailListFree.appendChild(li);
+                        });
+                        activateCheckboxAnimation(checkboxFree, checkboxContainerFree); // Activate animation on success
+                    } else {
+                        const li = document.createElement('li');
+                        li.textContent = "No emails generated. Please check your input and ensure it's a valid Gmail address.";
+                        emailListFree.appendChild(li);
+                    }
+                    generateBtnFree.textContent = "Generate Emails"; // Reset button text
+                    generateBtnFree.disabled = false; // Re-enable button
+                }, 1500); // 1.5 second delay to simulate ad loading
+            });
+
+            // Copy button for Free Version
+            copyBtnFree.addEventListener('click', () => {
+                copyEmailsToClipboard(emailListFree, copyFeedbackFree);
+            });
+
+
+            // --- Premium Site Logic ---
+            generateBtnPremium.addEventListener('click', () => {
+                const baseEmail = baseEmailPremiumInput.value.trim();
+                emailListPremium.innerHTML = ''; // Clear previous results
+                hideAdCarouselModal(); // Ensure ad modal is hidden
+                resetCheckboxes(); // Reset checkbox before attempting generation
+
+                if (!baseEmail) {
+                    showModal("Please enter a base email to generate sub-emails for the Premium Version.");
+                    return;
+                }
+
+                // Display the YouTube link area
+                youtubeLinkArea.classList.remove('hidden');
+                premiumGenerateClicked = true; // Set flag
+                youtubeLinkClickedTime = 0; // Reset YouTube click time
+                userChoseYouTube = false; // Reset user choice
+            });
+
+            // Copy button for Premium Version
+            copyBtnPremium.addEventListener('click', () => {
+                copyEmailsToClipboard(emailListPremium, copyFeedbackPremium);
+            });
+
+            // Track YouTube link click time
+            youtubeLink.addEventListener('click', () => {
+                youtubeLinkClickedTime = Date.now();
+                userChoseYouTube = true; // User explicitly chose YouTube
+            });
+
+            // Passkey validation and email generation for Premium site
+            passkeyOkBtn.addEventListener('click', () => {
+                const baseEmail = baseEmailPremiumInput.value.trim();
+                const enteredPasskey = passkeyInput.value.trim();
+                emailListPremium.innerHTML = ''; // Clear previous results
+                youtubeLinkArea.classList.add('hidden'); // Hide YouTube link area after passkey attempt
+                hideAdCarouselModal(); // Ensure ad modal is hidden
+                resetCheckboxes(); // Reset checkbox before attempting generation
+
+                if (!baseEmail) {
+                    showModal("Please enter a base email first in the Premium Version.");
+                    return;
+                }
+
+                // Ensure "Generate All Emails" was clicked first
+                if (!premiumGenerateClicked) {
+                    showModal("Please click 'Generate All Emails' first to proceed.");
+                    return;
+                }
+
+                // Original logic for YouTube link/passkey flow
+                const threeMinutes = 3 * 60 * 1000; // 3 minutes in milliseconds
+                const timeElapsed = Date.now() - youtubeLinkClickedTime;
+
+                let shouldShowChoiceModal = false;
+
+                if (!userChoseYouTube) {
+                    // Case 1: User has NOT clicked the YouTube link at all
+                    shouldShowChoiceModal = true;
+                } else if (timeElapsed < threeMinutes) {
+                    // Case 2: User HAS clicked the YouTube link, but not for 3 minutes or more
+                    shouldShowChoiceModal = true;
+                }
+
+                if (shouldShowChoiceModal) {
+                    showChoiceModal();
+                } else {
+                    // Proceed with passkey check
+                    if (enteredPasskey === CORRECT_PASSKEY) {
+                        const emails = generateSubEmails(baseEmail);
+                        if (emails.length > 0) {
+                            emails.forEach(email => {
+                                const li = document.createElement('li');
+                                li.textContent = email;
+                                emailListPremium.appendChild(li);
+                            });
+                            activateCheckboxAnimation(checkboxPremium, checkboxContainerPremium);
+                        } else {
+                            const li = document.createElement('li');
+                            li.textContent = "No emails generated. Please check your input and ensure it's a valid Gmail address.";
+                            emailListPremium.appendChild(li);
+                        }
+                        passkeyInput.value = '';
+                    } else {
+                        showModal("Incorrect Passkey! Please try again. ❗");
+                        passkeyInput.value = '';
+                    }
+                }
+            });
+
+            // Event listeners for the choice modal buttons
+            choiceYesBtn.addEventListener('click', () => {
+                hideChoiceModal();
+                window.open(YOUTUBE_CHANNEL_URL, '_blank'); // Open YouTube channel
+                userChoseYouTube = true; // Mark that user chose YouTube
+                // Optionally, if you want to immediately generate emails after choosing YouTube:
+                // passkeyOkBtn.click(); // This would re-trigger the passkey logic, now with userChoseYouTube true
+            });
+
+            choiceNoBtn.addEventListener('click', () => {
+                hideChoiceModal();
+                startAdCarousel(); // Start the ad carousel instead of displaying grid ads
+                userChoseYouTube = false; // Mark that user chose ads
+            });
+        });
+    </script>
+</body>
+</html>
