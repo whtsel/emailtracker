@@ -1,2 +1,2 @@
 # emailtracker
-Use one email multiple times for your internet log-in and tracking
+Use one email multiple times for your internet logins and tracking
